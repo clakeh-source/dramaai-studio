@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SeriesIndexRouteImport } from './routes/series.index'
+import { Route as SeriesNewRouteImport } from './routes/series.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const SeriesIndexRoute = SeriesIndexRouteImport.update({
   path: '/series/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeriesNewRoute = SeriesNewRouteImport.update({
+  id: '/series/new',
+  path: '/series/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/series/new': typeof SeriesNewRoute
   '/series/': typeof SeriesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/series/new': typeof SeriesNewRoute
   '/series': typeof SeriesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/series/new': typeof SeriesNewRoute
   '/series/': typeof SeriesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/series/'
+  fullPaths: '/' | '/series/new' | '/series/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/series'
-  id: '__root__' | '/' | '/series/'
+  to: '/' | '/series/new' | '/series'
+  id: '__root__' | '/' | '/series/new' | '/series/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SeriesNewRoute: typeof SeriesNewRoute
   SeriesIndexRoute: typeof SeriesIndexRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/series/new': {
+      id: '/series/new'
+      path: '/series/new'
+      fullPath: '/series/new'
+      preLoaderRoute: typeof SeriesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SeriesNewRoute: SeriesNewRoute,
   SeriesIndexRoute: SeriesIndexRoute,
 }
 export const routeTree = rootRouteImport
