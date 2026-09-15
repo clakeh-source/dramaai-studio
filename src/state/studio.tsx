@@ -225,7 +225,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         mutateEpisode(seriesId, episodeId, (e) => {
           const idx = e.scenes.findIndex((sc) => sc.id === sceneId);
           if (idx < 0) return e;
-          const source = e.scenes[idx];
+          const source = e.scenes[idx]!;
           const copy: Scene = {
             ...source,
             id: uid("scn"),
@@ -247,7 +247,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           const target = idx + dir;
           if (idx < 0 || target < 0 || target >= e.scenes.length) return e;
           const next = [...e.scenes];
-          [next[idx], next[target]] = [next[target], next[idx]];
+          [next[idx], next[target]] = [next[target]!, next[idx]!];
           return { ...e, scenes: renumber(next) };
         }),
       resetAll: () => {

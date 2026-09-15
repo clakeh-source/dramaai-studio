@@ -51,9 +51,9 @@ function CreateSeries() {
   const [form, setForm] = useState<CreateSeriesInput>({
     title: "",
     premise: "",
-    genre: GENRES[0],
-    audience: AUDIENCES[1],
-    language: LANGUAGES[0],
+    genre: GENRES[0]!,
+    audience: AUDIENCES[1]!,
+    language: LANGUAGES[0]!,
     episodeCount: 10,
     episodeDuration: 90,
     visualStyle: "Cinematic Realistic",
@@ -171,7 +171,7 @@ function CreateSeries() {
                   max={30}
                   step={1}
                   value={[form.episodeCount]}
-                  onValueChange={([v]) => set("episodeCount", v)}
+                  onValueChange={([v]) => set("episodeCount", v ?? form.episodeCount)}
                 />
               </div>
               <div className="space-y-3">
@@ -181,7 +181,7 @@ function CreateSeries() {
                   max={180}
                   step={15}
                   value={[form.episodeDuration]}
-                  onValueChange={([v]) => set("episodeDuration", v)}
+                  onValueChange={([v]) => set("episodeDuration", v ?? form.episodeDuration)}
                 />
               </div>
             </div>

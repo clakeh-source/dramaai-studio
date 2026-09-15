@@ -1,29 +1,55 @@
-# Welcome to your Lovable project
+# DramaAI Studio — V0.1
 
-This project was built with [Lovable](https://lovable.dev).
+A studio for creating short-form, vertical AI drama series. V0.1 is the interactive
+scaffold: the full creative workflow is playable end to end, with simulated generation
+and on-device storage.
 
-## Build with Lovable
+## What works today
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+- **Demo sign-in** — email/password UI, session kept on the device.
+- **My Series dashboard** — search, open, delete; seeded with "The Billionaire's Secret".
+- **Create Series wizard** — premise, genre, audience, language, visual style, aspect
+  format, episode count and length, then a simulated generation pass with progress.
+- **Series workspace** — editable series bible (logline, synopsis, world, themes, tone,
+  continuity rules), episode arc, character sheets, episode list, approval stage.
+- **Episode editor / Scene Studio** — scene location, action, dialogue lines with
+  performance directions, camera notes, mood, duration, per-scene status, reorder,
+  duplicate, delete.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+All edits save automatically to this device (localStorage). No data leaves the browser.
 
-## Development
+## Routes
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+| Route | Screen |
+| --- | --- |
+| `/` | Landing + sign-in |
+| `/series` | My Series dashboard |
+| `/series/new` | Create Series wizard |
+| `/series/$seriesId` | Series workspace (bible, cast, episodes) |
+| `/series/$seriesId/episodes/$episodeId` | Episode editor + Scene Studio |
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+## Data models
 
-## Built with
+`src/types/models.ts` mirrors the intended PostgreSQL schema: `Series`, `SeriesBible`,
+`EpisodeArcBeat`, `Episode`, `Scene`, `DialogueLine`, `Character`, `Asset`,
+`GenerationJob`, `StudioUser`.
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+## Architecture boundaries
+
+- `src/services/repository.ts` — data access behind a `StudioRepository` interface;
+  the localStorage implementation can be swapped for a database one without UI changes.
+- `src/services/generation.ts` — `buildBundle()` simulates story generation behind the
+  signature a real model call will keep.
+- `src/state/auth.tsx` — demo auth with the same context surface real auth will expose.
+- `src/state/studio.tsx` — all series/episode/scene mutations.
+
+## Next integration steps
+
+1. Real accounts and a hosted database (auth, rows, row-level security).
+2. Structured story generation from the premise (bible, cast, episode arc, scripts).
+3. Character and shot image generation with reference-image consistency.
+4. Provider-independent video generation per scene.
+5. Voice casting and dialogue narration.
+6. Automated assembly of scenes into finished episodes with audio.
+7. Credits, plans and payments.
+8. Publishing and distribution of finished episodes.

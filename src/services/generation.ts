@@ -45,7 +45,7 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
   const episodeArc: EpisodeArcBeat[] = Array.from({ length: input.episodeCount }, (_, i) => ({
     number: i + 1,
     title: `Episode ${i + 1}`,
-    beat: BEAT_TEMPLATES[i % BEAT_TEMPLATES.length],
+    beat: BEAT_TEMPLATES[i % BEAT_TEMPLATES.length]!,
   }));
 
   const bible: SeriesBible = {
@@ -102,26 +102,26 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
     id: uid("scn"),
     episodeId: ep1Id,
     number: i + 1,
-    location: ["INT. OPENING LOCATION — NIGHT", "INT. MEETING PLACE — DAY", "INT. PRIVATE SPACE — NIGHT", "EXT. THRESHOLD — DAWN"][i],
+    location: (["INT. OPENING LOCATION — NIGHT", "INT. MEETING PLACE — DAY", "INT. PRIVATE SPACE — NIGHT", "EXT. THRESHOLD — DAWN"][i])!,
     duration: sceneDuration,
     action: [
       `Cold open. We meet the protagonist mid-problem, established in one image drawn from: ${firstSentence(premise)}`,
       "The offer is made. The terms are stated plainly and refused once before being accepted.",
       "Alone, the protagonist counts the cost. A call from someone they love makes the decision for them.",
       "Arrival at the new world. The door opens before they knock — the episode ends on the hook.",
-    ][i],
-    characterIds: i === 0 || i === 2 ? [characters[0].id] : characters.map((c) => c.id),
+    ][i]!,
+    characterIds: i === 0 || i === 2 ? [characters[0]!.id] : characters.map((c) => c.id),
     dialogue: [
       {
         id: uid("dlg"),
-        speaker: characters[i % 2].name,
+        speaker: characters[i % 2]!.name,
         line: [
           "No name. No sender. Of course.",
           "One year. My terms, your silence.",
           "It's handled. It's always handled.",
           "Welcome home.",
-        ][i],
-        direction: ["under their breath", "flat, rehearsed", "lying gently", "for the cameras"][i],
+        ][i]!,
+        direction: (["under their breath", "flat, rehearsed", "lying gently", "for the cameras"][i])!,
       },
     ],
     camera: [
@@ -129,8 +129,8 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
       "Static two-shot into over-the-shoulder singles.",
       "Handheld medium with warm practical key light.",
       "Crane down to a tight close on the final reaction.",
-    ][i],
-    mood: ["Unsettled curiosity", "Cold tension", "Quiet desperation", "Ominous elegance"][i],
+    ][i]!,
+    mood: (["Unsettled curiosity", "Cold tension", "Quiet desperation", "Ominous elegance"][i])!,
     status: "Draft",
   }));
 
