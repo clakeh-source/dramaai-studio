@@ -1,7 +1,20 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Camera as CameraIcon,
+  Copy,
+  Film,
+  Image,
+  MessageSquareText,
+  Mic,
+  Plus,
+  Trash2,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/studio/AppShell";
+import { ConfirmDelete } from "@/components/studio/ConfirmDelete";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,9 +99,7 @@ function EpisodeEditor() {
           <Input
             className="mt-2 h-auto border-0 bg-transparent px-0 font-display text-4xl focus-visible:ring-0"
             value={episode.title}
-            onChange={(e) =>
-              studio.updateEpisode(series.id, episode.id, { title: e.target.value })
-            }
+            onChange={(e) => studio.updateEpisode(series.id, episode.id, { title: e.target.value })}
           />
           <Textarea
             className="mt-3"
@@ -148,7 +159,10 @@ function EpisodeEditor() {
               studio.duplicateScene(series.id, episode.id, scene.id);
               toast.success("Scene duplicated.");
             }}
-            onRemove={() => studio.removeScene(series.id, episode.id, scene.id)}
+            onRemove={() => {
+              studio.removeScene(series.id, episode.id, scene.id);
+              toast.success(`Scene ${scene.number} deleted.`);
+            }}
           />
         ))}
       </div>
@@ -199,23 +213,41 @@ function SceneCard({
           <Button size="icon" variant="ghost" aria-label="Move scene up" onClick={() => onMove(-1)}>
             <ArrowUp className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Move scene down" onClick={() => onMove(1)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Move scene down"
+            onClick={() => onMove(1)}
+          >
             <ArrowDown className="h-4 w-4" />
           </Button>
           <Button size="icon" variant="ghost" aria-label="Duplicate scene" onClick={onDuplicate}>
             <Copy className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" aria-label="Delete scene" onClick={onRemove}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <ConfirmDelete
+            title={`Delete Scene ${scene.number}?`}
+            description="This permanently removes the scene and all of its dialogue."
+            onConfirm={onRemove}
+            trigger={
+              <Button size="icon" variant="ghost" aria-label="Delete scene">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Action</Label>
-            <Textarea rows={3} value={scene.action} onChange={(e) => onPatch({ action: e.target.value })} />
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+              Action
+            </Label>
+            <Textarea
+              rows={3}
+              value={scene.action}
+              onChange={(e) => onPatch({ action: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
@@ -239,7 +271,10 @@ function SceneCard({
               </Button>
             </div>
             {scene.dialogue.map((d, i) => (
-              <div key={d.id} className="grid gap-2 rounded-xl border border-border/70 p-3 sm:grid-cols-[10rem_1fr]">
+              <div
+                key={d.id}
+                className="grid gap-2 rounded-xl border border-border/70 p-3 sm:grid-cols-[10rem_1fr]"
+              >
                 <div className="space-y-2">
                   <Input
                     value={d.speaker}
@@ -271,14 +306,19 @@ function SceneCard({
                       onPatch({ dialogue: next });
                     }}
                   />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label="Delete line"
-                    onClick={() => onPatch({ dialogue: scene.dialogue.filter((x) => x.id !== d.id) })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <ConfirmDelete
+                    title="Delete this dialogue line?"
+                    description="This line will be removed from the scene script."
+                    onConfirm={() => {
+                      onPatch({ dialogue: scene.dialogue.filter((x) => x.id !== d.id) });
+                      toast.success("Dialogue line deleted.");
+                    }}
+                    trigger={
+                      <Button size="icon" variant="ghost" aria-label="Delete line">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             ))}
@@ -287,8 +327,14 @@ function SceneCard({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Camera</Label>
-            <Textarea rows={3} value={scene.camera} onChange={(e) => onPatch({ camera: e.target.value })} />
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+              Camera
+            </Label>
+            <Textarea
+              rows={3}
+              value={scene.camera}
+              onChange={(e) => onPatch({ camera: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs uppercase tracking-widest text-muted-foreground">Mood</Label>
@@ -305,8 +351,61 @@ function SceneCard({
               onChange={(e) => onPatch({ duration: Number(e.target.value) || 0 })}
             />
           </div>
-          <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-            Shot image &amp; video generation arrive in V0.2
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <div
+              className="mx-auto flex aspect-[9/16] max-h-80 max-w-48 flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-background p-5 text-center"
+              aria-label="Scene media preview placeholder"
+            >
+              <Film className="h-7 w-7 text-primary" />
+              <p className="mt-3 text-sm font-medium">Scene preview</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Media generation is staged for V0.2–V0.3.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                toast.info("Image generation arrives in V0.2. Your scene prompt is ready.")
+              }
+            >
+              <Image className="mr-2 h-4 w-4" /> Regenerate Image · V0.2
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => toast.info("Provider-independent video generation arrives in V0.3.")}
+            >
+              <Video className="mr-2 h-4 w-4" /> Regenerate Video · V0.3
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                toast.info("Edit any dialogue line above; changes save automatically.")
+              }
+            >
+              <MessageSquareText className="mr-2 h-4 w-4" /> Change Dialogue
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                toast.info("Edit the camera direction above; changes save automatically.")
+              }
+            >
+              <CameraIcon className="mr-2 h-4 w-4" /> Change Camera
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="sm:col-span-2"
+              onClick={() => toast.info("Character voice generation arrives in V0.3.")}
+            >
+              <Mic className="mr-2 h-4 w-4" /> Generate Voice · V0.3
+            </Button>
           </div>
         </div>
       </div>

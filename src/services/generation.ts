@@ -102,7 +102,12 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
     id: uid("scn"),
     episodeId: ep1Id,
     number: i + 1,
-    location: (["INT. OPENING LOCATION — NIGHT", "INT. MEETING PLACE — DAY", "INT. PRIVATE SPACE — NIGHT", "EXT. THRESHOLD — DAWN"][i])!,
+    location: [
+      "INT. OPENING LOCATION — NIGHT",
+      "INT. MEETING PLACE — DAY",
+      "INT. PRIVATE SPACE — NIGHT",
+      "EXT. THRESHOLD — DAWN",
+    ][i]!,
     duration: sceneDuration,
     action: [
       `Cold open. We meet the protagonist mid-problem, established in one image drawn from: ${firstSentence(premise)}`,
@@ -121,7 +126,7 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
           "It's handled. It's always handled.",
           "Welcome home.",
         ][i]!,
-        direction: (["under their breath", "flat, rehearsed", "lying gently", "for the cameras"][i])!,
+        direction: ["under their breath", "flat, rehearsed", "lying gently", "for the cameras"][i]!,
       },
     ],
     camera: [
@@ -130,7 +135,7 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
       "Handheld medium with warm practical key light.",
       "Crane down to a tight close on the final reaction.",
     ][i]!,
-    mood: (["Unsettled curiosity", "Cold tension", "Quiet desperation", "Ominous elegance"][i])!,
+    mood: ["Unsettled curiosity", "Cold tension", "Quiet desperation", "Ominous elegance"][i]!,
     status: "Draft",
   }));
 

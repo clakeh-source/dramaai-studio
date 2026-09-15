@@ -27,9 +27,21 @@ export const Route = createFileRoute("/")({
 });
 
 const HIGHLIGHTS = [
-  { icon: Sparkles, title: "Series bible in one pass", body: "Logline, world, themes and a full episode arc from a single premise." },
-  { icon: Users, title: "Consistent cast", body: "Character sheets with appearance, wardrobe and continuity rules." },
-  { icon: Film, title: "Scene Studio", body: "Shot-by-shot editing with dialogue, camera notes and mood." },
+  {
+    icon: Sparkles,
+    title: "Series bible in one pass",
+    body: "Logline, world, themes and a full episode arc from a single premise.",
+  },
+  {
+    icon: Users,
+    title: "Consistent cast",
+    body: "Character sheets with appearance, wardrobe and continuity rules.",
+  },
+  {
+    icon: Film,
+    title: "Scene Studio",
+    body: "Shot-by-shot editing with dialogue, camera notes and mood.",
+  },
 ];
 
 function Landing() {

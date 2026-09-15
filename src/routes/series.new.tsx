@@ -18,7 +18,12 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { GENERATION_STEPS } from "@/services/generation";
 import { useStudio } from "@/state/studio";
-import { VISUAL_STYLES, type AspectFormat, type CreateSeriesInput, type VisualStyle } from "@/types/models";
+import {
+  VISUAL_STYLES,
+  type AspectFormat,
+  type CreateSeriesInput,
+  type VisualStyle,
+} from "@/types/models";
 
 export const Route = createFileRoute("/series/new")({
   head: () => ({
@@ -35,7 +40,14 @@ export const Route = createFileRoute("/series/new")({
   component: CreateSeries,
 });
 
-const GENRES = ["Romantic Thriller", "Revenge Drama", "Billionaire Romance", "Family Saga", "Supernatural", "Crime"];
+const GENRES = [
+  "Romantic Thriller",
+  "Revenge Drama",
+  "Billionaire Romance",
+  "Family Saga",
+  "Supernatural",
+  "Crime",
+];
 const AUDIENCES = ["Teens 13–17", "Adults 18–34", "Adults 25–49", "All audiences"];
 const LANGUAGES = ["English (UK)", "English (US)", "Spanish", "Portuguese", "French", "Hindi"];
 const STEP_LABELS = ["Premise", "Format", "Generate"];
@@ -137,10 +149,18 @@ function CreateSeries() {
                   <Picker value={form.genre} options={GENRES} onChange={(v) => set("genre", v)} />
                 </Field>
                 <Field label="Audience">
-                  <Picker value={form.audience} options={AUDIENCES} onChange={(v) => set("audience", v)} />
+                  <Picker
+                    value={form.audience}
+                    options={AUDIENCES}
+                    onChange={(v) => set("audience", v)}
+                  />
                 </Field>
                 <Field label="Language">
-                  <Picker value={form.language} options={LANGUAGES} onChange={(v) => set("language", v)} />
+                  <Picker
+                    value={form.language}
+                    options={LANGUAGES}
+                    onChange={(v) => set("language", v)}
+                  />
                 </Field>
               </div>
             </div>

@@ -37,7 +37,12 @@ interface StudioContextValue {
   addEpisode: (seriesId: string) => Episode;
   removeEpisode: (seriesId: string, episodeId: string) => void;
   addScene: (seriesId: string, episodeId: string) => Scene;
-  updateScene: (seriesId: string, episodeId: string, sceneId: string, patch: Partial<Scene>) => void;
+  updateScene: (
+    seriesId: string,
+    episodeId: string,
+    sceneId: string,
+    patch: Partial<Scene>,
+  ) => void;
   duplicateScene: (seriesId: string, episodeId: string, sceneId: string) => void;
   removeScene: (seriesId: string, episodeId: string, sceneId: string) => void;
   moveScene: (seriesId: string, episodeId: string, sceneId: string, dir: -1 | 1) => void;
@@ -68,7 +73,9 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    studioRepository.save(state).catch(() => toast.error("Changes could not be saved on this device."));
+    studioRepository
+      .save(state)
+      .catch(() => toast.error("Changes could not be saved on this device."));
   }, [state, ready]);
 
   const mutateSeries = useCallback((id: string, fn: (s: Series) => Series) => {
@@ -82,11 +89,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StudioContextValue>(() => {
     const renumber = (scenes: Scene[]) => scenes.map((s, i) => ({ ...s, number: i + 1 }));
 
-    const mutateEpisode = (
-      seriesId: string,
-      episodeId: string,
-      fn: (e: Episode) => Episode,
-    ) =>
+    const mutateEpisode = (seriesId: string, episodeId: string, fn: (e: Episode) => Episode) =>
       mutateSeries(seriesId, (s) => ({
         ...s,
         episodes: s.episodes.map((e) => (e.id === episodeId ? fn(e) : e)),
@@ -113,7 +116,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         return series;
       },
       updateSeries: (id, patch) => mutateSeries(id, (s) => ({ ...s, ...patch })),
-      deleteSeries: (id) => setState((prev) => ({ series: prev.series.filter((s) => s.id !== id) })),
+      deleteSeries: (id) =>
+        setState((prev) => ({ series: prev.series.filter((s) => s.id !== id) })),
       applyGeneration: (id, input) =>
         mutateSeries(id, (s) => {
           const bundle = buildBundle(id, input);

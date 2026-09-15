@@ -1,5 +1,8 @@
 # DramaAI Studio
 
+> Codex edition — migrated from the original Lovable scaffold and completed as
+> a standalone, editable codebase with no Lovable runtime dependency.
+
 DramaAI Studio is a writing and pre-production workspace for short-form AI drama
 series. You start from a single premise and end up with a series bible, a cast,
 an episode arc and a scene-by-scene shooting plan — all editable, all in one
@@ -45,13 +48,13 @@ premise you typed. It is deterministic local code, not a model call.
 
 ## Routes
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Landing page and sign-in |
-| `/series` | My Series dashboard |
-| `/series/new` | Create Series wizard |
-| `/series/$seriesId` | Series workspace (bible, cast, episodes) |
-| `/series/$seriesId/episodes/$episodeId` | Episode editor / Scene Studio |
+| Route                                   | Purpose                                  |
+| --------------------------------------- | ---------------------------------------- |
+| `/`                                     | Landing page and sign-in                 |
+| `/series`                               | My Series dashboard                      |
+| `/series/new`                           | Create Series wizard                     |
+| `/series/$seriesId`                     | Series workspace (bible, cast, episodes) |
+| `/series/$seriesId/episodes/$episodeId` | Episode editor / Scene Studio            |
 
 ## Core models
 
@@ -92,10 +95,10 @@ integration below is a swap behind an existing interface.
 ## Local development
 
 ```bash
-bun install
-bun run dev      # http://localhost:8080
-bunx tsgo --noEmit
-bun run build
+npm install
+npm run dev
+npx tsc --noEmit
+npm run build
 ```
 
 Stack: React, TypeScript, Vite, TanStack Start/Router, Tailwind CSS,

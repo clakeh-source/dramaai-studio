@@ -22,12 +22,7 @@ export function WorkflowSteps({ status, className }: { status: SeriesStatus; cla
             >
               {done ? <Check className="h-3 w-3" /> : i + 1}
             </span>
-            <span
-              className={cn(
-                "text-xs",
-                active ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
+            <span className={cn("text-xs", active ? "text-foreground" : "text-muted-foreground")}>
               {step}
             </span>
             {i < SERIES_STATUSES.length - 1 && (

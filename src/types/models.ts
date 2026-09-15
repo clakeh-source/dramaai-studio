@@ -7,13 +7,7 @@
 export type UUID = string;
 
 export type VisualStyle =
-  | "Cinematic Realistic"
-  | "Soap Opera"
-  | "K-drama"
-  | "Nollywood"
-  | "Anime"
-  | "Comic"
-  | "Custom";
+  "Cinematic Realistic" | "Soap Opera" | "K-drama" | "Nollywood" | "Anime" | "Comic" | "Custom";
 
 export const VISUAL_STYLES: VisualStyle[] = [
   "Cinematic Realistic",
@@ -29,11 +23,7 @@ export type AspectFormat = "9:16" | "16:9";
 
 /** Approval workflow for a series. */
 export type SeriesStatus =
-  | "Draft"
-  | "Story Approved"
-  | "Characters Approved"
-  | "Script Approved"
-  | "Ready for Media";
+  "Draft" | "Story Approved" | "Characters Approved" | "Script Approved" | "Ready for Media";
 
 export const SERIES_STATUSES: SeriesStatus[] = [
   "Draft",

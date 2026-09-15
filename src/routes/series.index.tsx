@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Film, Layers, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/studio/AppShell";
+import { ConfirmDelete } from "@/components/studio/ConfirmDelete";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +34,7 @@ function SeriesList() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl">My Series</h1>
-          <p className="mt-2 text-muted-foreground">
-            {state.series.length} series in production.
-          </p>
+          <p className="mt-2 text-muted-foreground">{state.series.length} series in production.</p>
         </div>
         <div className="relative w-full max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -94,17 +93,19 @@ function SeriesList() {
                       Open workspace
                     </Link>
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    aria-label={`Delete ${s.title}`}
-                    onClick={() => {
+                  <ConfirmDelete
+                    title={`Delete ${s.title}?`}
+                    description="This permanently removes the series bible, characters, episodes, scenes, and local assets."
+                    onConfirm={() => {
                       deleteSeries(s.id);
                       toast.success(`"${s.title}" deleted.`);
                     }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    trigger={
+                      <Button size="icon" variant="ghost" aria-label={`Delete ${s.title}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                 </div>
               </article>
             );
