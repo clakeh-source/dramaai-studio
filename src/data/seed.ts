@@ -218,7 +218,7 @@ export function seedSeries(): Series {
       tone: "Elegant and restrained, with heat underneath. Hitchcock by way of a modern romance — never camp, never cruel.",
       continuityRules:
         "1. Ada's gold bangle is never removed on camera. 2. Julian never says the dead wife's name aloud before Episode 8. 3. Rain appears in every episode Ada lies. 4. The locked east wing is only shot from the corridor until Episode 7. 5. Vertical 9:16 framing keeps two-shots stacked, not side by side.",
-      episodeArc: arc,
+      episodeArc: arc.map((beat) => ({ ...beat, episodeId: `eps_${beat.number}` })),
       updatedAt: iso(1),
     },
     episodes: [

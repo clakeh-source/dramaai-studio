@@ -97,7 +97,8 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
 
   const ep1Id = uid("eps");
   const sceneCount = 4;
-  const sceneDuration = Math.max(10, Math.round(input.episodeDuration / sceneCount));
+  const baseSceneDuration = Math.floor(input.episodeDuration / sceneCount);
+  const extraSeconds = input.episodeDuration % sceneCount;
   const scenes: Scene[] = Array.from({ length: sceneCount }, (_, i) => ({
     id: uid("scn"),
     episodeId: ep1Id,
@@ -108,7 +109,7 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
       "INT. PRIVATE SPACE — NIGHT",
       "EXT. THRESHOLD — DAWN",
     ][i]!,
-    duration: sceneDuration,
+    duration: baseSceneDuration + (i < extraSeconds ? 1 : 0),
     action: [
       `Cold open. We meet the protagonist mid-problem, established in one image drawn from: ${firstSentence(premise)}`,
       "The offer is made. The terms are stated plainly and refused once before being accepted.",
@@ -162,6 +163,10 @@ export function buildBundle(seriesId: string, input: CreateSeriesInput): Generat
           scenes: [],
         },
   );
+
+  for (const [index, episode] of episodes.entries()) {
+    episodeArc[index]!.episodeId = episode.id;
+  }
 
   return { bible, characters, episodes };
 }

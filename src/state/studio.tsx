@@ -4,13 +4,19 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
 import { uid } from "@/lib/id";
-import { studioRepository } from "@/services/repository";
+import { StudioConflictError, studioRepository } from "@/services/repository";
 import { buildBundle } from "@/services/generation";
+import {
+  normalizeDuration,
+  removeCharacterFromSeries,
+  synchronizeEpisodes,
+} from "@/state/studio-operations";
 import type {
   Character,
   CreateSeriesInput,
@@ -24,6 +30,7 @@ import type {
 interface StudioContextValue {
   state: StudioState;
   ready: boolean;
+  loadError: string | null;
   getSeries: (id: string) => Series | undefined;
   createSeries: (input: CreateSeriesInput) => Series;
   updateSeries: (id: string, patch: Partial<Series>) => void;
@@ -47,6 +54,7 @@ interface StudioContextValue {
   removeScene: (seriesId: string, episodeId: string, sceneId: string) => void;
   moveScene: (seriesId: string, episodeId: string, sceneId: string, dir: -1 | 1) => void;
   resetAll: () => void;
+  downloadRecovery: () => void;
 }
 
 const StudioContext = createContext<StudioContextValue | null>(null);
@@ -56,15 +64,30 @@ const EMPTY: StudioState = { series: [] };
 export function StudioProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StudioState>(EMPTY);
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const revisionRef = useRef(0);
+  const persistedStateRef = useRef<StudioState | undefined>(undefined);
+  const saveQueueRef = useRef(Promise.resolve());
+  const remoteEpochRef = useRef(0);
 
   useEffect(() => {
     let alive = true;
     studioRepository
       .load()
       .then((loaded) => {
-        if (alive) setState(loaded);
+        if (!alive) return;
+        revisionRef.current = loaded.revision;
+        persistedStateRef.current = loaded.state;
+        setState(loaded.state);
+        setInitialized(true);
       })
-      .catch(() => toast.error("Could not load your studio data."))
+      .catch(() => {
+        setLoadError("Stored studio data is invalid. Download a recovery copy before resetting.");
+        toast.error(
+          "Stored studio data is invalid. Your original data was preserved for recovery.",
+        );
+      })
       .finally(() => alive && setReady(true));
     return () => {
       alive = false;
@@ -72,11 +95,42 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
-    studioRepository
-      .save(state)
-      .catch(() => toast.error("Changes could not be saved on this device."));
-  }, [state, ready]);
+    if (!initialized || persistedStateRef.current === state) return;
+    const nextState = state;
+    const epoch = remoteEpochRef.current;
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      if (epoch !== remoteEpochRef.current) return;
+      try {
+        revisionRef.current = await studioRepository.save(nextState, revisionRef.current);
+        persistedStateRef.current = nextState;
+      } catch (error) {
+        if (error instanceof StudioConflictError) {
+          const latest = await studioRepository.load();
+          remoteEpochRef.current += 1;
+          revisionRef.current = latest.revision;
+          persistedStateRef.current = latest.state;
+          setState(latest.state);
+          toast.warning(
+            "Newer edits from another tab were loaded. Your conflicting edit was not saved.",
+          );
+          return;
+        }
+        toast.error("Changes could not be saved on this device.");
+      }
+    });
+  }, [state, initialized]);
+
+  useEffect(
+    () =>
+      studioRepository.subscribe((latest) => {
+        remoteEpochRef.current += 1;
+        revisionRef.current = latest.revision;
+        persistedStateRef.current = latest.state;
+        setState(latest.state);
+        toast.info("Edits from another tab were loaded.");
+      }),
+    [],
+  );
 
   const mutateSeries = useCallback((id: string, fn: (s: Series) => Series) => {
     setState((prev) => ({
@@ -98,6 +152,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     return {
       state,
       ready,
+      loadError,
       getSeries: (id) => state.series.find((s) => s.id === id),
       createSeries: (input) => {
         const nowIso = new Date().toISOString();
@@ -156,10 +211,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
             : [...s.characters, character],
         })),
       removeCharacter: (seriesId, characterId) =>
-        mutateSeries(seriesId, (s) => ({
-          ...s,
-          characters: s.characters.filter((c) => c.id !== characterId),
-        })),
+        mutateSeries(seriesId, (s) => removeCharacterFromSeries(s, characterId)),
       newCharacter: (seriesId) => ({
         id: uid("chr"),
         seriesId,
@@ -176,7 +228,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         referenceImages: [],
       }),
       updateEpisode: (seriesId, episodeId, patch) =>
-        mutateEpisode(seriesId, episodeId, (e) => ({ ...e, ...patch })),
+        mutateSeries(seriesId, (s) => {
+          const episodes = s.episodes.map((episode) =>
+            episode.id === episodeId ? { ...episode, ...patch } : episode,
+          );
+          return synchronizeEpisodes(s, episodes);
+        }),
       addEpisode: (seriesId) => {
         const series = state.series.find((s) => s.id === seriesId);
         const number = (series?.episodes.length ?? 0) + 1;
@@ -190,16 +247,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           duration: series?.episodeDuration ?? 90,
           scenes: [],
         };
-        mutateSeries(seriesId, (s) => ({ ...s, episodes: [...s.episodes, episode] }));
+        mutateSeries(seriesId, (s) => synchronizeEpisodes(s, [...s.episodes, episode]));
         return episode;
       },
       removeEpisode: (seriesId, episodeId) =>
-        mutateSeries(seriesId, (s) => ({
-          ...s,
-          episodes: s.episodes
-            .filter((e) => e.id !== episodeId)
-            .map((e, i) => ({ ...e, number: i + 1 })),
-        })),
+        mutateSeries(seriesId, (s) =>
+          synchronizeEpisodes(
+            s,
+            s.episodes.filter((e) => e.id !== episodeId),
+          ),
+        ),
       addScene: (seriesId, episodeId) => {
         const scene: Scene = {
           id: uid("scn"),
@@ -223,7 +280,17 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       updateScene: (seriesId, episodeId, sceneId, patch) =>
         mutateEpisode(seriesId, episodeId, (e) => ({
           ...e,
-          scenes: e.scenes.map((sc) => (sc.id === sceneId ? { ...sc, ...patch } : sc)),
+          scenes: e.scenes.map((sc) =>
+            sc.id === sceneId
+              ? {
+                  ...sc,
+                  ...patch,
+                  ...(patch.duration === undefined
+                    ? {}
+                    : { duration: normalizeDuration(patch.duration, sc.duration) }),
+                }
+              : sc,
+          ),
         })),
       duplicateScene: (seriesId, episodeId, sceneId) =>
         mutateEpisode(seriesId, episodeId, (e) => {
@@ -255,10 +322,32 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           return { ...e, scenes: renumber(next) };
         }),
       resetAll: () => {
-        studioRepository.reset().then((fresh) => setState(fresh));
+        studioRepository
+          .reset(revisionRef.current)
+          .then((fresh) => {
+            revisionRef.current = fresh.revision;
+            persistedStateRef.current = fresh.state;
+            setState(fresh.state);
+            setInitialized(true);
+            setLoadError(null);
+          })
+          .catch(() => toast.error("Studio data could not be reset on this device."));
+      },
+      downloadRecovery: () => {
+        const raw = studioRepository.exportRaw();
+        if (!raw) {
+          toast.error("No recovery data is available.");
+          return;
+        }
+        const url = URL.createObjectURL(new Blob([raw], { type: "application/json" }));
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `dramaai-studio-recovery-${new Date().toISOString().slice(0, 10)}.json`;
+        anchor.click();
+        URL.revokeObjectURL(url);
       },
     };
-  }, [state, ready, mutateSeries]);
+  }, [state, ready, loadError, mutateSeries]);
 
   return <StudioContext.Provider value={value}>{children}</StudioContext.Provider>;
 }

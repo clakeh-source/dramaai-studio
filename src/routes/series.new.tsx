@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/studio/AppShell";
@@ -58,7 +58,7 @@ function CreateSeries() {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState(0);
-  const started = useRef(false);
+  const [generation, setGeneration] = useState<CreateSeriesInput | null>(null);
 
   const [form, setForm] = useState<CreateSeriesInput>({
     title: "",
@@ -76,9 +76,7 @@ function CreateSeries() {
     setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    if (step !== 2 || started.current) return;
-    started.current = true;
-    const series = createSeries(form);
+    if (!generation) return;
     let i = 0;
     const timer = window.setInterval(() => {
       i += 1;
@@ -86,13 +84,15 @@ function CreateSeries() {
       setProgress(Math.round((i / GENERATION_STEPS.length) * 100));
       if (i >= GENERATION_STEPS.length) {
         window.clearInterval(timer);
-        applyGeneration(series.id, form);
+        setGeneration(null);
+        const series = createSeries(generation);
+        applyGeneration(series.id, generation);
         toast.success("Your series bible is ready.");
         navigate({ to: "/series/$seriesId", params: { seriesId: series.id } });
       }
     }, 700);
     return () => window.clearInterval(timer);
-  }, [step, form, createSeries, applyGeneration, navigate]);
+  }, [generation, createSeries, applyGeneration, navigate]);
 
   const canContinue =
     step === 0 ? form.title.trim().length > 1 && form.premise.trim().length > 20 : true;
@@ -146,10 +146,16 @@ function CreateSeries() {
               </div>
               <div className="grid gap-6 sm:grid-cols-3">
                 <Field label="Genre">
-                  <Picker value={form.genre} options={GENRES} onChange={(v) => set("genre", v)} />
+                  <Picker
+                    label="Genre"
+                    value={form.genre}
+                    options={GENRES}
+                    onChange={(v) => set("genre", v)}
+                  />
                 </Field>
                 <Field label="Audience">
                   <Picker
+                    label="Audience"
                     value={form.audience}
                     options={AUDIENCES}
                     onChange={(v) => set("audience", v)}
@@ -157,6 +163,7 @@ function CreateSeries() {
                 </Field>
                 <Field label="Language">
                   <Picker
+                    label="Language"
                     value={form.language}
                     options={LANGUAGES}
                     onChange={(v) => set("language", v)}
@@ -171,6 +178,7 @@ function CreateSeries() {
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field label="Visual style">
                   <Picker
+                    label="Visual style"
                     value={form.visualStyle}
                     options={VISUAL_STYLES}
                     onChange={(v) => set("visualStyle", v as VisualStyle)}
@@ -178,6 +186,7 @@ function CreateSeries() {
                 </Field>
                 <Field label="Aspect format">
                   <Picker
+                    label="Aspect format"
                     value={form.format}
                     options={["9:16", "16:9"]}
                     onChange={(v) => set("format", v as AspectFormat)}
@@ -185,8 +194,10 @@ function CreateSeries() {
                 </Field>
               </div>
               <div className="space-y-3">
-                <Label>Episodes — {form.episodeCount}</Label>
+                <Label htmlFor="episode-count">Episodes — {form.episodeCount}</Label>
                 <Slider
+                  id="episode-count"
+                  aria-label="Episode count"
                   min={3}
                   max={30}
                   step={1}
@@ -195,8 +206,10 @@ function CreateSeries() {
                 />
               </div>
               <div className="space-y-3">
-                <Label>Episode length — {form.episodeDuration}s</Label>
+                <Label htmlFor="episode-duration">Episode length — {form.episodeDuration}s</Label>
                 <Slider
+                  id="episode-duration"
+                  aria-label="Episode length in seconds"
                   min={30}
                   max={180}
                   step={15}
@@ -212,7 +225,8 @@ function CreateSeries() {
               <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
               <h2 className="mt-6 font-display text-2xl">{GENERATION_STEPS[phase]}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Building "{form.title}" — {form.episodeCount} episodes in {form.format}.
+                Simulating a draft for "{form.title}" — {form.episodeCount} episodes in{" "}
+                {form.format}.
               </p>
               <Progress className="mx-auto mt-8 max-w-md" value={progress} />
             </div>
@@ -227,7 +241,17 @@ function CreateSeries() {
             >
               <ArrowLeft className="mr-1 h-4 w-4" /> Back
             </Button>
-            <Button disabled={!canContinue} onClick={() => setStep(step + 1)}>
+            <Button
+              disabled={!canContinue}
+              onClick={() => {
+                if (step === 1) {
+                  setProgress(0);
+                  setPhase(0);
+                  setGeneration({ ...form });
+                }
+                setStep(step + 1);
+              }}
+            >
               {step === 1 ? (
                 <>
                   <Sparkles className="mr-1 h-4 w-4" /> Generate series
@@ -255,17 +279,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function Picker({
+  label,
   value,
   options,
   onChange,
 }: {
+  label: string;
   value: string;
   options: readonly string[];
   onChange: (v: string) => void;
 }) {
+  const id = useId();
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
+      <SelectTrigger id={id} aria-label={label} className="w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

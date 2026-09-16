@@ -25,6 +25,14 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function isStudioUser(value: unknown): value is StudioUser {
+  if (!value || typeof value !== "object") return false;
+  const user = value as Record<string, unknown>;
+  return [user["id"], user["email"], user["name"]].every(
+    (field) => typeof field === "string" && field.length > 0,
+  );
+}
+
 function nameFromEmail(email: string) {
   const raw = email.split("@")[0]?.replace(/[._-]+/g, " ") ?? "Creator";
   return raw.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -37,9 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(AUTH_KEY);
-      if (raw) setUser(JSON.parse(raw) as StudioUser);
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (!isStudioUser(parsed)) throw new Error("Invalid saved session");
+        setUser(parsed);
+      }
     } catch {
-      window.localStorage.removeItem(AUTH_KEY);
+      try {
+        window.localStorage.removeItem(AUTH_KEY);
+      } catch {
+        // Storage can be disabled; the app still opens without a saved session.
+      }
     }
     setReady(true);
   }, []);

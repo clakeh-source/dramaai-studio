@@ -103,7 +103,7 @@ function Workspace() {
               toast.success(`Moved to ${v}.`);
             }}
           >
-            <SelectTrigger className="w-56">
+            <SelectTrigger aria-label="Series approval stage" className="w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -399,6 +399,7 @@ function CharacterCard({
   onChange: (patch: Partial<Character>) => void;
   onRemove: () => void;
 }) {
+  const fieldId = (field: string) => `${character.id}-${field}`;
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="flex items-start gap-3">
@@ -407,17 +408,20 @@ function CharacterCard({
         </div>
         <div className="flex-1 space-y-2">
           <Input
+            aria-label="Character name"
             value={character.name}
             placeholder="Character name"
             onChange={(e) => onChange({ name: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
+              aria-label={`${character.name || "Character"} role`}
               value={character.role}
               placeholder="Role"
               onChange={(e) => onChange({ role: e.target.value })}
             />
             <Input
+              aria-label={`${character.name || "Character"} age`}
               value={character.age}
               placeholder="Age"
               onChange={(e) => onChange({ age: e.target.value })}
@@ -447,10 +451,14 @@ function CharacterCard({
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+            <Label
+              htmlFor={fieldId(key)}
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
               {label}
             </Label>
             <Textarea
+              id={fieldId(key)}
               rows={2}
               value={character[key]}
               onChange={(e) => onChange({ [key]: e.target.value })}

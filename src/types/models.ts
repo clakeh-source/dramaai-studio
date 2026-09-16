@@ -99,6 +99,7 @@ export interface Character {
 }
 
 export interface EpisodeArcBeat {
+  episodeId?: UUID;
   number: number;
   title: string;
   beat: string;

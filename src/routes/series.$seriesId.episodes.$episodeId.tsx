@@ -17,6 +17,7 @@ import { AppShell } from "@/components/studio/AppShell";
 import { ConfirmDelete } from "@/components/studio/ConfirmDelete";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,6 +34,7 @@ import {
   EPISODE_STATUSES,
   SCENE_STATUSES,
   type EpisodeStatus,
+  type Character,
   type Scene,
   type SceneStatus,
 } from "@/types/models";
@@ -97,11 +99,13 @@ function EpisodeEditor() {
             Episode {String(episode.number).padStart(2, "0")}
           </p>
           <Input
+            aria-label="Episode title"
             className="mt-2 h-auto border-0 bg-transparent px-0 font-display text-4xl focus-visible:ring-0"
             value={episode.title}
             onChange={(e) => studio.updateEpisode(series.id, episode.id, { title: e.target.value })}
           />
           <Textarea
+            aria-label="Episode synopsis"
             className="mt-3"
             rows={3}
             value={episode.synopsis}
@@ -118,7 +122,7 @@ function EpisodeEditor() {
               studio.updateEpisode(series.id, episode.id, { status: v as EpisodeStatus })
             }
           >
-            <SelectTrigger className="w-52">
+            <SelectTrigger aria-label="Episode status" className="w-52">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -152,7 +156,7 @@ function EpisodeEditor() {
           <SceneCard
             key={scene.id}
             scene={scene}
-            castNames={series.characters.map((c) => c.name)}
+            cast={series.characters}
             onPatch={(patch) => studio.updateScene(series.id, episode.id, scene.id, patch)}
             onMove={(dir) => studio.moveScene(series.id, episode.id, scene.id, dir)}
             onDuplicate={() => {
@@ -172,14 +176,14 @@ function EpisodeEditor() {
 
 function SceneCard({
   scene,
-  castNames,
+  cast,
   onPatch,
   onMove,
   onDuplicate,
   onRemove,
 }: {
   scene: Scene;
-  castNames: string[];
+  cast: Character[];
   onPatch: (patch: Partial<Scene>) => void;
   onMove: (dir: -1 | 1) => void;
   onDuplicate: () => void;
@@ -192,12 +196,13 @@ function SceneCard({
           {String(scene.number).padStart(2, "0")}
         </span>
         <Input
+          aria-label={`Scene ${scene.number} location`}
           className="min-w-64 flex-1 font-medium tracking-wide"
           value={scene.location}
           onChange={(e) => onPatch({ location: e.target.value })}
         />
         <Select value={scene.status} onValueChange={(v) => onPatch({ status: v as SceneStatus })}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger aria-label={`Scene ${scene.number} status`} className="w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -240,15 +245,55 @@ function SceneCard({
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+            <Label
+              htmlFor={`${scene.id}-action`}
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
               Action
             </Label>
             <Textarea
+              id={`${scene.id}-action`}
               rows={3}
               value={scene.action}
               onChange={(e) => onPatch({ action: e.target.value })}
             />
           </div>
+
+          <fieldset className="space-y-2">
+            <legend className="text-xs uppercase tracking-widest text-muted-foreground">
+              Scene cast
+            </legend>
+            {cast.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Add characters to assign a cast.</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {cast.map((character) => {
+                  const castId = `${scene.id}-cast-${character.id}`;
+                  const checked = scene.characterIds.includes(character.id);
+                  return (
+                    <label
+                      key={character.id}
+                      htmlFor={castId}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        id={castId}
+                        checked={checked}
+                        onCheckedChange={(next) =>
+                          onPatch({
+                            characterIds: next
+                              ? [...scene.characterIds, character.id]
+                              : scene.characterIds.filter((id) => id !== character.id),
+                          })
+                        }
+                      />
+                      {character.name || "Unnamed character"}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </fieldset>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -262,7 +307,7 @@ function SceneCard({
                   onPatch({
                     dialogue: [
                       ...scene.dialogue,
-                      { id: uid("dlg"), speaker: castNames[0] ?? "", line: "", direction: "" },
+                      { id: uid("dlg"), speaker: cast[0]?.name ?? "", line: "", direction: "" },
                     ],
                   })
                 }
@@ -277,6 +322,7 @@ function SceneCard({
               >
                 <div className="space-y-2">
                   <Input
+                    aria-label={`Scene ${scene.number} dialogue ${i + 1} speaker`}
                     value={d.speaker}
                     placeholder="Speaker"
                     onChange={(e) => {
@@ -286,6 +332,7 @@ function SceneCard({
                     }}
                   />
                   <Input
+                    aria-label={`Scene ${scene.number} dialogue ${i + 1} direction`}
                     value={d.direction ?? ""}
                     placeholder="(direction)"
                     onChange={(e) => {
@@ -297,6 +344,7 @@ function SceneCard({
                 </div>
                 <div className="flex gap-2">
                   <Textarea
+                    aria-label={`Scene ${scene.number} dialogue ${i + 1} line`}
                     rows={3}
                     value={d.line}
                     placeholder="Line"
@@ -327,28 +375,48 @@ function SceneCard({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+            <Label
+              htmlFor={`${scene.id}-camera`}
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
               Camera
             </Label>
             <Textarea
+              id={`${scene.id}-camera`}
               rows={3}
               value={scene.camera}
               onChange={(e) => onPatch({ camera: e.target.value })}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Mood</Label>
-            <Input value={scene.mood} onChange={(e) => onPatch({ mood: e.target.value })} />
+            <Label
+              htmlFor={`${scene.id}-mood`}
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
+              Mood
+            </Label>
+            <Input
+              id={`${scene.id}-mood`}
+              value={scene.mood}
+              onChange={(e) => onPatch({ mood: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+            <Label
+              htmlFor={`${scene.id}-duration`}
+              className="text-xs uppercase tracking-widest text-muted-foreground"
+            >
               Duration (seconds)
             </Label>
             <Input
+              id={`${scene.id}-duration`}
               type="number"
               min={1}
               value={scene.duration}
-              onChange={(e) => onPatch({ duration: Number(e.target.value) || 0 })}
+              onChange={(e) => {
+                const duration = Number(e.target.value);
+                if (Number.isFinite(duration) && duration >= 1) onPatch({ duration });
+              }}
             />
           </div>
           <div className="overflow-hidden rounded-xl border border-border bg-background">

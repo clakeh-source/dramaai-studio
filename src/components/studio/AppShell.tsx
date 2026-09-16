@@ -36,6 +36,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
+  if (studio.loadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-lg rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="font-display text-3xl">Your studio data needs recovery</h1>
+          <p className="mt-3 text-sm text-muted-foreground">{studio.loadError}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button variant="outline" onClick={studio.downloadRecovery}>
+              Download recovery copy
+            </Button>
+            <Button onClick={studio.resetAll}>Reset local studio</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const parts = pathname.split("/").filter(Boolean);
   const seriesId = parts[0] === "series" && parts[1] && parts[1] !== "new" ? parts[1] : undefined;
   const episodeId = parts[2] === "episodes" ? parts[3] : undefined;
